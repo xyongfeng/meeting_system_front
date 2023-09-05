@@ -5,20 +5,17 @@ import {
   computed,
   inject,
   onBeforeUnmount,
-  onUnmounted,
-  nextTick,
+
   onBeforeMount,
 } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import store from "../../../js/store";
 import axios from "../../../js/axios";
-import { join, trim } from "lodash";
-import { getTime, isExistMeeting, myLocalInfo, sleep } from "../../../utils/myUtils";
-import { ElScrollbar } from "element-plus";
-import UNoticeList from "./UNoticeList.vue";
-import TakePhoto from "../../global/takePhoto.vue";
-import { Microphone, Mute } from "@element-plus/icons-vue";
+import {trim} from "lodash";
+import {getTime, isExistMeeting, sleep} from "../../../utils/myUtils";
 import html2canvas from "html2canvas";
+import {webRTCConfig} from "../../../config";
+
 
 const audioMsg = ref("开启语音");
 const rtcMsg = ref("开启投屏");
@@ -73,7 +70,7 @@ socket.on("action", (data) => {
 
 socket.on("meetchat", (data) => {
   var user = data.user;
-  msgList.value.push({ id: user.id, name: user.name, msg: data.msg, time: getTime() });
+  msgList.value.push({id: user.id, name: user.name, msg: data.msg, time: getTime()});
   sleep(100).then(() => {
     toBottom();
   });
@@ -131,7 +128,7 @@ socket.on("message", (data) => {
       case "offer":
         // console.log("offer", senderId, videoUserId);
         // 检查对面是否是投屏者
-        if (senderId == videoUserId) {
+        if (senderId === videoUserId) {
           // 将数据与video绑定
           createRTCConnection(senderId);
         } else {
@@ -161,11 +158,11 @@ socket.on("message", (data) => {
         videoUserId = senderId;
         rtcStarted.value = 2;
         // 接收到投屏信息，返回响应，投屏者将和自己建立连接
-        sendMessageById(mid, { type: "rtcReadied" }, senderId, user.value.id);
+        sendMessageById(mid, {type: "rtcReadied"}, senderId, user.value.id);
         break;
       case "rtcStart audio":
         // 同上 响应对方
-        sendMessageById(mid, { type: "rtcReadied" }, senderId, user.value.id);
+        sendMessageById(mid, {type: "rtcReadied"}, senderId, user.value.id);
         break;
       case "rtcReadied":
         // 接收方连接准备工作完成，开始媒体协商
@@ -174,17 +171,17 @@ socket.on("message", (data) => {
         break;
       case "joined":
         // 加入房间之后请求连接
-        sendMessage(mid, { type: "reqconn" }, user.value.id);
+        sendMessage(mid, {type: "reqconn"}, user.value.id);
         break;
       case "reqconn":
         // 成员请求连接，投屏者收到请求，创建连接
         // console.log("reqconn", rtcStarted.value, audioStarted.value);
         if (rtcStarted.value == 1) {
           // 投屏的用户
-          sendMessageById(mid, { type: "rtcStart" }, senderId, user.value.id);
+          sendMessageById(mid, {type: "rtcStart"}, senderId, user.value.id);
         } else if (rtcStarted.value != 1 && audioStarted.value) {
           // 只开放了语音的用户
-          sendMessageById(mid, { type: "rtcStart audio" }, senderId, user.value.id);
+          sendMessageById(mid, {type: "rtcStart audio"}, senderId, user.value.id);
         }
         break;
     }
@@ -199,7 +196,7 @@ const rtcEndAction = () => {
 // video 控件对象
 const videoDom = ref(null);
 const audioDom = ref(null);
-const meetingInfo = ref({ userId: -1 });
+const meetingInfo = ref({userId: -1});
 const route = useRoute();
 const router = useRouter();
 const meetingId = ref(route.params.mid);
@@ -215,7 +212,7 @@ const createRTCById = (senderId, isAudio = false) => {
 };
 
 const isMaster = computed(() => {
-  return meetingInfo.value.userId == user.value.id;
+  return meetingInfo.value.userId === user.value.id;
 });
 
 // 获取会议信息，如果该会议不存在则返回404
@@ -236,7 +233,7 @@ const getMeetingInfo = async () => {
 };
 // 发送socket加入会议
 const socketJoin = (meetingId) => {
-  socket.emit("join", { meetingId: meetingId });
+  socket.emit("join", {meetingId: meetingId});
 };
 // 全局发送，可以选择携带发送者id
 const sendMessage = (meetingId, data, senderId) => {
@@ -259,28 +256,13 @@ const sendMessageById = (meetingId, data, toId, senderId) => {
 const vRtcConns = {};
 // 投屏的用户id
 var videoUserId = -1;
-// 远端视频流（RemoteStream）集合
-// var vRemoteStream = {};
+
 // 自己本地的视频流集合
 var vLocalStream = null;
 // 自己本地的音频流集合
 var aLocalStream = null;
 
-const configuration = {
-  iceServers: [
-    // turn服务器地址，账号，密码
-    { urls: "stun:118.31.51.13:3478" },
-    {
-      urls: ["turn:118.31.51.13:3478"],
-      username: "xyongfeng",
-      credential: "123456",
-      credentialType: "password",
-    },
-  ],
-  // 默认使用relay方式传输数据
-  iceTransportPolicy: "relay",
-  iceCandidatePoolSize: "0",
-};
+const configuration = webRTCConfig
 
 const mergeTracks = (baseStrem, extraStream) => {
   if (extraStream == null) return baseStrem;
@@ -288,6 +270,7 @@ const mergeTracks = (baseStrem, extraStream) => {
     baseStrem.addTrack(extraStream.getAudioTracks()[0]);
     return baseStrem;
   }
+
   var context = new AudioContext();
   var baseSource = context.createMediaStreamSource(baseStrem);
   var extraSource = context.createMediaStreamSource(extraStream);
@@ -310,11 +293,11 @@ const upScreen = async () => {
   // 获取屏幕流
   vLocalStream = await navigator.mediaDevices.getDisplayMedia({
     video: true,
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true},
   });
   // 麦克风流
   aLocalStream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true},
     video: false,
   });
   videoDom.value.srcObject = vLocalStream;
@@ -325,40 +308,39 @@ const upScreen = async () => {
   audioMsg.value = "关闭语音";
 
   videoUserId = user.value.id;
-  sendMessage(meetingId.value, { type: "rtcStart" }, user.value.id);
+  sendMessage(meetingId.value, {type: "rtcStart"}, user.value.id);
 };
 
 const upAudio = () => {
   navigator.mediaDevices
-    .getUserMedia({
-      audio: true,
-      video: false,
-    })
-    .then((stream) => {
-      aLocalStream = stream;
-      // 重新建立连接
-      // console.log("upAudio", rtcStarted.value);
-      if (rtcStarted.value == 1)
-        sendMessage(meetingId.value, { type: "rtcStart" }, user.value.id);
-      else sendMessage(meetingId.value, { type: "rtcStart audio" }, user.value.id);
-    });
+      .getUserMedia({
+        audio: true,
+        video: false,
+      })
+      .then((stream) => {
+        aLocalStream = stream;
+        // 重新建立连接
+        // console.log("upAudio", rtcStarted.value);
+        if (rtcStarted.value === 1)
+          sendMessage(meetingId.value, {type: "rtcStart"}, user.value.id);
+        else sendMessage(meetingId.value, {type: "rtcStart audio"}, user.value.id);
+      });
 };
 const createRTCConnection = (id, isAudio) => {
-  // if (vRtcConns[id]) return;
-  vRtcConns[id] = new RTCPeerConnection();
+  vRtcConns[id] = new RTCPeerConnection(configuration);
 
   vRtcConns[id].onicecandidate = (e) => {
     if (e.candidate) {
       sendMessageById(
-        meetingId.value,
-        {
-          type: "candidate",
-          label: e.candidate.sdpMLineIndex,
-          id: e.candidate.sdpMid,
-          candidate: e.candidate.candidate,
-        },
-        id,
-        user.value.id
+          meetingId.value,
+          {
+            type: "candidate",
+            label: e.candidate.sdpMLineIndex,
+            id: e.candidate.sdpMid,
+            candidate: e.candidate.candidate,
+          },
+          id,
+          user.value.id
       );
     }
   };
@@ -369,50 +351,50 @@ const createOffer = (id, isAudio = false) => {
   vRtcConns[id].onnegotiationneeded = () => {
     // { offerToReceiveVideo: 1, offerToReceiveAudio: 1 }
     vRtcConns[id]
-      .createOffer()
-      .then((offer) => {
-        // 将本地offer加入rtc对象
-        return vRtcConns[id].setLocalDescription(offer);
-      })
-      .then(() => {
-        // 发送offer sdp给远端
-        sendMessageById(
-          meetingId.value,
-          vRtcConns[id].localDescription,
-          id,
-          user.value.id
-        );
-      })
-      .catch((e) => console.error("createOffer", e));
+        .createOffer()
+        .then((offer) => {
+          // 将本地offer加入rtc对象
+          return vRtcConns[id].setLocalDescription(offer);
+        })
+        .then(() => {
+          // 发送offer sdp给远端
+          sendMessageById(
+              meetingId.value,
+              vRtcConns[id].localDescription,
+              id,
+              user.value.id
+          );
+        })
+        .catch((e) => console.error("createOffer", e));
   };
 };
 const createAnswer = (data, senderId) => {
   vRtcConns[senderId].setRemoteDescription(new RTCSessionDescription(data)).then(() => {
     // 创建answer
     vRtcConns[senderId]
-      .createAnswer()
-      .then((answer) => {
-        // 保存为本地信息
-        return vRtcConns[senderId].setLocalDescription(answer);
-      })
-      .then(() => {
-        // 给对方发送answer
-        sendMessageById(
-          meetingId.value,
-          vRtcConns[senderId].localDescription,
-          senderId,
-          user.value.id
-        );
-      })
-      .catch((e) => {
-        console.error("offer error", e);
-      });
+        .createAnswer()
+        .then((answer) => {
+          // 保存为本地信息
+          return vRtcConns[senderId].setLocalDescription(answer);
+        })
+        .then(() => {
+          // 给对方发送answer
+          sendMessageById(
+              meetingId.value,
+              vRtcConns[senderId].localDescription,
+              senderId,
+              user.value.id
+          );
+        })
+        .catch((e) => {
+          console.error("offer error", e);
+        });
   });
 };
 // 接收远端视频数据
 const getVideoRemoteStream = (stream) => {
   // await nextTick();
-  console.log("getVideoRemoteStream", videoDom);
+  // console.log("getVideoRemoteStream", videoDom);
   if (videoDom.value == null) {
     location.reload();
   }
@@ -426,7 +408,7 @@ const getVideoRemoteStream = (stream) => {
 // 接收远端音频数据
 const getAudioRemoteStream = (id) => {
   return (stream) => {
-    console.log("getAudioRemoteStream", id, stream, userMap.value);
+    // console.log("getAudioRemoteStream", id, stream, userMap.value);
     // if (userMap.value[id] == null) {
     //   location.reload();
     // }
@@ -458,17 +440,17 @@ const sumbitRTC = () => {
     return;
   }
   if (navigator.mediaDevices) {
-    if (rtcStarted.value == 1) {
+    if (rtcStarted.value === 1) {
       // 关闭投屏后语音不关，要建立语音新连接
-      sendMessage(meetingId.value, { type: "rtcEnd" }, user.value.id);
-      setMyState({ uping: false });
+      sendMessage(meetingId.value, {type: "rtcEnd"}, user.value.id);
+      setMyState({uping: false});
       if (videoDom.value.srcObject) stopVideo();
       toStopAudio();
       videoUserId = -1;
       rtcStarted.value = -1;
       rtcMsg.value = "开启投屏";
     } else {
-      if (rtcStarted.value == 2) {
+      if (rtcStarted.value === 2) {
         ElMessage.error("投屏失败，现在台上已有一人");
         return;
       }
@@ -478,7 +460,7 @@ const sumbitRTC = () => {
           ElMessage.warning("你已经被禁止投屏");
           return;
         }
-        setMyState({ uping: true });
+        setMyState({uping: true});
         stopAudio();
         rtcStarted.value = 1;
         upScreen();
@@ -493,12 +475,12 @@ const toStopAudio = () => {
   if (aLocalStream) stopAudio();
   audioStarted.value = false;
   audioMsg.value = "开启语音";
-  setMyState({ speeching: false });
+  setMyState({speeching: false});
 };
 // 获取状态，是否被禁用
 const getMyState = async () => {
   var res = await axios.get(
-    `/users/meeting/${meetingId.value}/userState/${user.value.id}`
+      `/users/meeting/${meetingId.value}/userState/${user.value.id}`
   );
   return res;
 };
@@ -518,11 +500,11 @@ const sumbitAudio = () => {
     } else {
       getMyState().then((res) => {
         let state = res.data;
-        if (state && state.hadMuted && rtcStarted.value != 1) {
+        if (state && state.hadMuted && rtcStarted.value !== 1) {
           ElMessage.warning("你已经被禁止开麦");
           return;
         }
-        setMyState({ speeching: true });
+        setMyState({speeching: true});
         upAudio();
         audioStarted.value = true;
         audioMsg.value = "关闭语音";
@@ -535,7 +517,7 @@ const sumbitAudio = () => {
 const GetUserIndex = (userId) => {
   // console.log(userList.value);
   userList.value.forEach((value, index, array) => {
-    if (value.id == userId) return index;
+    if (value.id === userId) return index;
   });
 };
 const sumbitAudioMuted = (user) => {
@@ -549,7 +531,7 @@ const sumbitAudioMuted = (user) => {
 };
 
 const sendNewsToMeeting = (msg) => {
-  socket.emit("meetchat", { meetingId: meetingId.value, msg: msg });
+  socket.emit("meetchat", {meetingId: meetingId.value, msg: msg});
 };
 
 const scrollbarRef = ref(null);
@@ -564,7 +546,7 @@ const toBottom = () => {
 };
 
 const submitSendNewsToMeeting = () => {
-  if (trim(send_msg.value) == "") return;
+  if (trim(send_msg.value) === "") return;
   sendNewsToMeeting(send_msg.value);
   send_msg.value = "";
 };
@@ -593,18 +575,18 @@ const sumbitSignIn = () => {
 const signIn = async () => {
   // console.log(takePhotoRef.value.getImgBase64());
   await axios
-    .post(`/users/signIn/${meetingId.value}`, {
-      imgBase64: takePhotoRef.value.getImgBase64(),
-    })
-    .then((res) => {
-      takePhotoRef.value.stopLoading();
-      if (res.code == 200) {
-        takePhotoRef.value.beforeClose();
-      }
-    })
-    .catch((e) => {
-      console.log(e);
-    });
+      .post(`/users/signIn/${meetingId.value}`, {
+        imgBase64: takePhotoRef.value.getImgBase64(),
+      })
+      .then((res) => {
+        takePhotoRef.value.stopLoading();
+        if (res.code == 200) {
+          takePhotoRef.value.beforeClose();
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+      });
 };
 
 const sumbitSignInVisible = ref(false);
@@ -635,8 +617,10 @@ const setUserAudio = (user) => {
 const audioPlay = (user) => {
   user.autoplay = true;
 
-  user.audio.play().catch((err) => {});
+  user.audio.play().catch((err) => {
+  });
 };
+
 function toggleSound() {
   try {
     Object.values(userMap.value).forEach((user) => {
@@ -647,17 +631,19 @@ function toggleSound() {
         if (!user.audio.paused) user.muted = false;
       }
     });
-  } catch (e) {}
+  } catch (e) {
+  }
 }
+
 // 退出房间
 const outRoom = () => {
   // console.log(route.params, route.query);
   var joined = route.query.joined;
   // 决定跳转页面
-  if (joined && joined == "true") {
-    router.replace({ path: "/home/joinedMeetingList" });
+  if (joined && joined === "true") {
+    router.replace({path: "/home/joinedMeetingList"});
   } else {
-    router.replace({ path: "/home/myMeetingList" });
+    router.replace({path: "/home/myMeetingList"});
   }
 };
 // 录制视频流
@@ -674,28 +660,28 @@ const startRecord = async () => {
   chunks = [];
   // console.log(chunks);
   await navigator.mediaDevices
-    .getDisplayMedia({
-      video: true,
-      audio: true,
-    })
-    .then((res) => {
-      recordMediaStream = res;
-      mediaRecorder = new MediaRecorder(recordMediaStream, {
-        audioBitsPerSecond: 128000, //音频码率
-        videoBitsPerSecond: 2500000, //视频码率
-        mimeType: "video/webm\;codecs=h264", //录制格式，视不同浏览器而定
-      });
+      .getDisplayMedia({
+        video: true,
+        audio: true,
+      })
+      .then((res) => {
+        recordMediaStream = res;
+        mediaRecorder = new MediaRecorder(recordMediaStream, {
+          audioBitsPerSecond: 128000, //音频码率
+          videoBitsPerSecond: 2500000, //视频码率
+          mimeType: "video/webm\;codecs=h264", //录制格式，视不同浏览器而定
+        });
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          // console.log(e);
-          //这里直接将数据写入了内存，如果录制长视频应该写入到别的地方
-          chunks.push(e.data);
-        }
-      };
-      //开始录制 0.1秒保存一次
-      mediaRecorder.start(100);
-    });
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            // console.log(e);
+            //这里直接将数据写入了内存，如果录制长视频应该写入到别的地方
+            chunks.push(e.data);
+          }
+        };
+        //开始录制 0.1秒保存一次
+        mediaRecorder.start(100);
+      });
 };
 // 停止录制
 const stopRecord = () => {
@@ -742,7 +728,7 @@ const sendExistMinute = () => {
     sendExistMinuteTimer = null;
   }
   // console.log("exist_minute", isMaster.value);
-  socket.emit("exist_minute", { meetingId: meetingId.value });
+  socket.emit("exist_minute", {meetingId: meetingId.value});
 };
 const getUserState = async () => {
   let res = await axios.get(`/users/meeting/${meetingId.value}/userState/0/-1`);
@@ -774,12 +760,12 @@ const screenshot = () => {
     height: imgHeight,
   }).then(async (canvas) => {
     let base64 = canvas
-      .toDataURL("image/jpeg")
-      .substring("data:image/jpeg;base64,".length);
+        .toDataURL("image/jpeg")
+        .substring("data:image/jpeg;base64,".length);
     let res = await axios.post(`/meetingScreenshot/${meetingId.value}`, {
       imgBase64: base64,
     });
-    if (res.code == 200) {
+    if (res.code === 200) {
       ElMessage.success("截屏成功,已保存至个人中心");
     }
   });
@@ -789,7 +775,7 @@ const screenshot = () => {
 const faceVerificationRef = ref();
 const faceAccess = ref(true);
 const setFaceVerificationVisible = (x) =>
-  faceVerificationRef.value.setFaceVerificationVisible(x);
+    faceVerificationRef.value.setFaceVerificationVisible(x);
 
 // 检查是否重复加入房间
 var stopFlag = false;
@@ -854,8 +840,8 @@ onBeforeUnmount(() => {
   }
 
   sleep(100).then(() => {
-    console.log("leave");
-    if (!stopFlag) socket.emit("leave", { meetingId: meetingId.value });
+    // console.log("leave");
+    if (!stopFlag) socket.emit("leave", {meetingId: meetingId.value});
   });
   // 强制刷新将当前vue都重置，否则有缓存就会出现问题
   location.reload();
@@ -876,59 +862,66 @@ onBeforeUnmount(() => {
           <!-- 垂直分割线 -->
           <div class="user_all">
             <el-row v-for="(item, index) in userMap" :key="index"
-              ><div class="user_block" v-if="item != undefined">
-                <el-avatar :size="50" :src="item.headImage" />
+            >
+              <div class="user_block" v-if="item != undefined">
+                <el-avatar :size="50" :src="item.headImage"/>
                 <div>
                   <el-link
-                    @click="sumbitUserInfo(item.id)"
-                    :underline="false"
-                    type="primary"
-                    >{{ item.name }}</el-link
+                      @click="sumbitUserInfo(item.id)"
+                      :underline="false"
+                      type="primary"
+                  >{{ item.name }}
+                  </el-link
                   >
                   <div v-if="item.uping || item.speeching" class="state">
                     {{ item.uping ? "已投屏" : "已开麦" }}
                   </div>
                 </div>
                 <audio
-                  controls="controls"
-                  :autoplay="item.autoplay"
-                  :muted="item.muted"
-                  :srcObject="item.audioStream"
-                  :ref="setUserAudio(item)"
-                  v-show="false"
+                    controls="controls"
+                    :autoplay="item.autoplay"
+                    :muted="item.muted"
+                    :srcObject="item.audioStream"
+                    :ref="setUserAudio(item)"
+                    v-show="false"
                 />
                 <!-- <span class="waitupText" v-if="rtcStarted == 1">-投屏中-</span> -->
                 <div v-if="item.id != user.id">
                   <el-button
-                    @click="sumbitAudioMuted(item)"
-                    :icon="item.muted ? Mute : Microphone"
-                    >{{ item.muted ? "取消" : "静音" }}</el-button
+                      @click="sumbitAudioMuted(item)"
+                      :icon="item.muted ? Mute : Microphone"
+                  >{{ item.muted ? "取消" : "静音" }}
+                  </el-button
                   >
                 </div>
-              </div></el-row
+              </div>
+            </el-row
             >
           </div>
         </el-scrollbar>
       </el-aside>
       <el-container>
         <el-header
-          ><div class="header">
+        >
+          <div class="header">
             <el-row>
               <el-col :span="24">会议名：{{ meetingInfo.name }}</el-col>
               <el-col :span="24">会议Id：{{ meetingInfo.id }}</el-col>
               <el-col :span="24">开始时间：{{ meetingInfo.startDate }}</el-col>
             </el-row>
-          </div></el-header
+          </div>
+        </el-header
         >
         <el-main
-          ><div class="main_block">
+        >
+          <div class="main_block">
             <div class="video_block" ref="screenshotRef">
               <video
-                v-show="rtcStarted > 0"
-                class="video"
-                ref="videoDom"
-                controls="true"
-                autoplay="true"
+                  v-show="rtcStarted > 0"
+                  class="video"
+                  ref="videoDom"
+                  controls="true"
+                  autoplay="true"
               />
               <div v-show="rtcStarted == -1" class="waitup_block">
                 <span class="waitup_msg">暂时还没有人投屏</span>
@@ -946,10 +939,10 @@ onBeforeUnmount(() => {
                         <span v-if="item.id != -1">
                           [{{ item.time }}]
                           <el-link
-                            @click="sumbitUserInfo(item.id)"
-                            :underline="false"
-                            type="primary"
-                            >{{ item.name }}</el-link
+                              @click="sumbitUserInfo(item.id)"
+                              :underline="false"
+                              type="primary"
+                          >{{ item.name }}</el-link
                           >: {{ item.msg }}
                         </span>
                         <span v-else>[{{ item.time }}] {{ item.msg }}</span>
@@ -962,31 +955,36 @@ onBeforeUnmount(() => {
               </div>
               <div class="chat_send">
                 <el-input
-                  v-model="send_msg"
-                  placeholder="输入要发送的内容"
-                  style="width: 290px"
-                  @keyup.enter="submitSendNewsToMeeting()"
-                /><el-button @click="submitSendNewsToMeeting()">发送</el-button>
+                    v-model="send_msg"
+                    placeholder="输入要发送的内容"
+                    style="width: 290px"
+                    @keyup.enter="submitSendNewsToMeeting()"
+                />
+                <el-button @click="submitSendNewsToMeeting()">发送</el-button>
               </div>
             </div>
           </div>
           <div class="turn_button">
-            <el-button @click="sumbitAudio">{{ audioMsg }}</el-button
-            ><el-button @click="sumbitRTC">{{ rtcMsg }}</el-button>
+            <el-button @click="sumbitAudio">{{ audioMsg }}
+            </el-button
+            >
+            <el-button @click="sumbitRTC">{{ rtcMsg }}</el-button>
             <el-button @click="setNoticeVisible(true)">公告</el-button>
             <el-button
-              v-if="!isMaster"
-              :disabled="sumbitSignInVisible"
-              @click="sumbitSignIn"
-              >签到</el-button
+                v-if="!isMaster"
+                :disabled="sumbitSignInVisible"
+                @click="sumbitSignIn"
+            >签到
+            </el-button
             >
             <el-button @click="screenshot">截屏保存</el-button>
             <el-button @click="outRoom">退出房间</el-button>
             <div class="admin_button" v-if="isMaster">
               <el-button @click="setSignInListVisible(true)">成员列表</el-button>
               <el-button @click="sumbitRecord">{{
-                recording ? "关闭录制" : "开启录制"
-              }}</el-button>
+                  recording ? "关闭录制" : "开启录制"
+                }}
+              </el-button>
             </div>
           </div>
         </el-main>
@@ -994,40 +992,40 @@ onBeforeUnmount(() => {
     </el-container>
     <!-- 签到对话框 -->
     <take-photo
-      ref="takePhotoRef"
-      v-if="signInVisible"
-      title="签到"
-      :sendAction="signIn"
-      :closeView="() => setSignInVisible(false)"
+        ref="takePhotoRef"
+        v-if="signInVisible"
+        title="签到"
+        :sendAction="signIn"
+        :closeView="() => setSignInVisible(false)"
     />
     <!-- 人脸验证进房 -->
     <face-verification
-      ref="faceVerificationRef"
-      :successAction="mountedAction"
-      :uncloseable="true"
+        ref="faceVerificationRef"
+        :successAction="mountedAction"
+        :uncloseable="true"
     />
 
     <!-- 已签到用户列表对话框 -->
     <u-sign-in-list
-      v-if="signInListVisible"
-      :signInListVisible="signInListVisible"
-      :meetingId="meetingId"
-      @setSignInListVisible="setSignInListVisible"
+        v-if="signInListVisible"
+        :signInListVisible="signInListVisible"
+        :meetingId="meetingId"
+        @setSignInListVisible="setSignInListVisible"
     />
     <!-- 公告列表对话框 -->
     <u-notice-list
-      v-if="noticeVisible"
-      :noticeVisible="noticeVisible"
-      :meetingId="meetingId"
-      :isMaster="isMaster"
-      @setNoticeVisible="setNoticeVisible"
+        v-if="noticeVisible"
+        :noticeVisible="noticeVisible"
+        :meetingId="meetingId"
+        :isMaster="isMaster"
+        @setNoticeVisible="setNoticeVisible"
     />
     <!-- 参会人信息框 -->
     <user-info-by-id
-      v-if="userInfoVisible"
-      :userInfoVisible="userInfoVisible"
-      :userId="userInfoId"
-      @setUserInfoVisible="setUserInfoVisible"
+        v-if="userInfoVisible"
+        :userInfoVisible="userInfoVisible"
+        :userId="userInfoId"
+        @setUserInfoVisible="setUserInfoVisible"
     />
   </div>
 </template>
@@ -1036,9 +1034,11 @@ onBeforeUnmount(() => {
 .admin_button {
   margin-top: 1vh;
 }
+
 .user_all {
   margin-top: 10px;
 }
+
 .video {
   height: 75vh;
 }
@@ -1051,31 +1051,38 @@ onBeforeUnmount(() => {
   border-radius: 4px;
   min-height: 36px;
 }
+
 .el-container {
   height: 100vh;
   background-color: #f1f1f1;
 }
+
 .el-main {
   padding: 0;
   margin-top: 40px;
   overflow: hidden;
 }
+
 .el-aside {
   border-width: 0 1px 0 0;
   border-style: double;
   border-color: grey;
 }
+
 .el-header {
   padding: 0;
 }
+
 .user_block {
   width: 100vh;
   text-align: center;
   margin-bottom: 30px;
 }
+
 .user_block > div {
   margin-top: 10px;
 }
+
 .users_display_title {
   margin: 30px 0 0 50px;
 }
@@ -1090,6 +1097,7 @@ onBeforeUnmount(() => {
   border-style: double;
   border-color: grey;
 }
+
 .chat_block {
   overflow-y: auto;
   background-color: #f1f1f1;
@@ -1100,11 +1108,13 @@ onBeforeUnmount(() => {
   border-style: double;
   border-color: grey;
 }
+
 .waitup_block {
   width: 135vh;
   height: 75vh;
   background-color: black;
 }
+
 .waitup_msg {
   color: #f1f1f1;
 
@@ -1112,9 +1122,11 @@ onBeforeUnmount(() => {
   display: block;
   font-size: large;
 }
+
 .main_block {
   display: flex;
 }
+
 .infinite-list {
   padding: 0;
   margin: 0;
