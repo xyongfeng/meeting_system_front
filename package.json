@@ -1,0 +1,36 @@
+{
+  "name": "meeting_system",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^6.1.0",
+    "@easydarwin/easyplayer": "^5.0.3",
+    "axios": "^0.27.2",
+    "default-passive-events": "^2.0.0",
+    "echarts": "^5.4.1",
+    "echarts-wordcloud": "^2.1.0",
+    "element-plus": "^2.2.2",
+    "express": "^4.18.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
+    "mockjs": "^1.1.0",
+    "socket.io-client": "^2.2.0",
+    "vue": "^3.2.25",
+    "vue-json-excel": "^0.3.0",
+    "vue-router": "^4.0.15",
+    "vue-socket.io": "^3.0.10",
+    "vue3-json-excel": "^1.0.10-alpha",
+    "vuex": "^4.0.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^2.3.3",
+    "unplugin-auto-import": "^0.7.2",
+    "unplugin-vue-components": "^0.19.5",
+    "vite": "^2.9.9"
+  }
+}
