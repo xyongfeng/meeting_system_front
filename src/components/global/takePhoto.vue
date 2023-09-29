@@ -36,6 +36,7 @@ const openCamera = () => {
       })
       .catch((err) => {
         console.log(err);
+        ElMessage.warning("摄像头打开失败");
       });
   } else {
     ElMessage.warning("该浏览器不支持开启摄像头，请更换最新版浏览器");

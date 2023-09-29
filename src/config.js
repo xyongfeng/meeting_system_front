@@ -23,7 +23,7 @@ export const webRTCConfig = {
  * 请求地址配置
  */
 export const requestConfig = {
-    socket: 'ws://localhost:9092',
-    baseURL: 'http://localhost:3000/api',
-    backendUrl: 'http://localhost:8080',
+    socket: 'ws://127.0.0.1:9092',
+    baseURL: 'http://127.0.0.1:80/api',
+    backendUrl: 'http://127.0.0.1:8080',
 }

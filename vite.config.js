@@ -18,7 +18,7 @@ export default defineConfig({
 
     // 设置代理，解决跨域问题
     server: {
-        port: '3000',
+        port: '80',
         proxy: {
             '/api': {
                 ws: false,

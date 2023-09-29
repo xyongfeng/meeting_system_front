@@ -5,7 +5,6 @@ import {
   computed,
   inject,
   onBeforeUnmount,
-
   onBeforeMount,
 } from "vue";
 import {useRoute, useRouter} from "vue-router";
@@ -15,7 +14,7 @@ import {trim} from "lodash";
 import {getTime, isExistMeeting, sleep} from "../../../utils/myUtils";
 import html2canvas from "html2canvas";
 import {webRTCConfig} from "../../../config";
-
+import { Microphone, Mute } from '@element-plus/icons-vue'
 
 const audioMsg = ref("开启语音");
 const rtcMsg = ref("开启投屏");
@@ -30,44 +29,54 @@ const msgList = ref([]);
 const socket = inject("socket");
 const send_msg = ref("");
 
+// 接收某用户状态更改
 socket.on("updateState", (data) => {
+  // 用户ID
   let userId = data.userId;
+  // 是否已投屏
   let uping = data.uping;
+  // 是否已开麦
   let speeching = data.speeching;
-  // console.log(userMap.value[userId]);
-  if (uping != undefined) userMap.value[userId].uping = uping;
-  if (speeching != undefined) userMap.value[userId].speeching = speeching;
+  // 设置对应状态到用户字典userMap
+  if (uping !== undefined) userMap.value[userId].uping = uping;
+  if (speeching !== undefined) userMap.value[userId].speeching = speeching;
 });
 
+// 监听远程动作，比如强制刷新，强制闭麦，强制下台
 socket.on("action", (data) => {
   let type = data.type;
   let msg = data.msg;
-  console.log(data);
-
+  console.log("action_data", data);
+  // 返回成功与否消息
   if (msg) {
     if (msg.startsWith("success:")) ElMessage.success(msg.substring(8));
     else ElMessage.warning(msg);
   }
+
   if (type === "refresh") {
-    // console.log("refresh", data);
-    if (rtcStarted.value != 1 && audioStarted.value) {
+    // 刷新指令，服务器直接让客户端刷新，重置状态
+    // console.log("refresh_data", data);
+    if (rtcStarted.value !== 1 && audioStarted.value) {
       toStopAudio();
     }
-    if (rtcStarted.value == 1) {
+    if (rtcStarted.value === 1) {
       sumbitRTC();
     }
     location.reload();
   } else if (type === "stop_speech") {
-    if (rtcStarted.value != 1 && audioStarted.value) {
+    // 检查是否已经开麦，但不是主持人，就闭麦
+    if (rtcStarted.value !== 1 && audioStarted.value) {
       toStopAudio();
     }
   } else if (type === "stop_up") {
-    if (rtcStarted.value == 1) {
+    // 检查是否已经开麦，但不是主持人，就下台
+    if (rtcStarted.value === 1) {
       sumbitRTC();
     }
   }
 });
 
+// 会议聊天监听
 socket.on("meetchat", (data) => {
   var user = data.user;
   msgList.value.push({id: user.id, name: user.name, msg: data.msg, time: getTime()});
@@ -76,6 +85,7 @@ socket.on("meetchat", (data) => {
   });
 });
 
+// 计算会议人数
 const countUserMany = () => {
   var sum = 0;
   Object.values(userMap.value).forEach((user) => {
@@ -84,6 +94,7 @@ const countUserMany = () => {
   meetMany.value = sum;
 };
 
+// 插入用户
 const joinedUser = (user) => {
   user["audioStream"] = null;
   user["muted"] = false;
@@ -100,7 +111,7 @@ socket.on("left_user", (userId) => {
   if (userMap.value[userId].uping) {
     rtcEndAction();
   }
-
+  // 清空状态
   userMap.value[userId] = undefined;
   countUserMany();
 });
@@ -167,7 +178,7 @@ socket.on("message", (data) => {
       case "rtcReadied":
         // 接收方连接准备工作完成，开始媒体协商
 
-        createRTCById(senderId, user.value.id != videoUserId);
+        createRTCById(senderId, user.value.id !== videoUserId);
         break;
       case "joined":
         // 加入房间之后请求连接
@@ -176,10 +187,10 @@ socket.on("message", (data) => {
       case "reqconn":
         // 成员请求连接，投屏者收到请求，创建连接
         // console.log("reqconn", rtcStarted.value, audioStarted.value);
-        if (rtcStarted.value == 1) {
+        if (rtcStarted.value === 1) {
           // 投屏的用户
           sendMessageById(mid, {type: "rtcStart"}, senderId, user.value.id);
-        } else if (rtcStarted.value != 1 && audioStarted.value) {
+        } else if (rtcStarted.value !== 1 && audioStarted.value) {
           // 只开放了语音的用户
           sendMessageById(mid, {type: "rtcStart audio"}, senderId, user.value.id);
         }
@@ -264,6 +275,7 @@ var aLocalStream = null;
 
 const configuration = webRTCConfig
 
+// 合并音频流和视频流
 const mergeTracks = (baseStrem, extraStream) => {
   if (extraStream == null) return baseStrem;
   if (!baseStrem.getAudioTracks().length) {
@@ -815,7 +827,7 @@ onMounted(() => {
   // 检查是否该会议是否开启了人脸验证
   getMeetingInfo().then((info) => {
     // console.log(info);
-    if (info.needFace && info.userId != user.value.id) {
+    if (info.needFace && info.userId !== user.value.id) {
       faceAccess.value = false;
       setFaceVerificationVisible(true);
     } else {
@@ -826,10 +838,10 @@ onMounted(() => {
 // 页面销毁前
 onBeforeUnmount(() => {
   // 如果正在投屏和开麦的就关闭
-  if (rtcStarted.value != 1 && audioStarted.value) {
+  if (rtcStarted.value !== 1 && audioStarted.value) {
     toStopAudio();
   }
-  if (rtcStarted.value == 1) {
+  if (rtcStarted.value === 1) {
     sumbitRTC();
   }
   clearInterval(autoPlayTimer);
@@ -863,7 +875,7 @@ onBeforeUnmount(() => {
           <div class="user_all">
             <el-row v-for="(item, index) in userMap" :key="index"
             >
-              <div class="user_block" v-if="item != undefined">
+              <div class="user_block" v-if="item !== undefined">
                 <el-avatar :size="50" :src="item.headImage"/>
                 <div>
                   <el-link
@@ -886,7 +898,7 @@ onBeforeUnmount(() => {
                     v-show="false"
                 />
                 <!-- <span class="waitupText" v-if="rtcStarted == 1">-投屏中-</span> -->
-                <div v-if="item.id != user.id">
+                <div v-if="item.id !== user.id">
                   <el-button
                       @click="sumbitAudioMuted(item)"
                       :icon="item.muted ? Mute : Microphone"
