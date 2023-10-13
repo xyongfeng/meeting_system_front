@@ -7,9 +7,9 @@ axios.defaults.baseURL = requestConfig.baseURL
 
 axios.interceptors.request.use(
     (config)=>{
-        // if(config.url != null && config.url.startsWith("/admin") && config.url != '/admin/login')
-            config.headers.Authorization = window.localStorage.getItem('adminlogin')
-        
+        config.withCredentials = true;
+        config.headers.Authorization = window.localStorage.getItem('adminlogin')
+        // console.log(config);
         return config
     },error=>Promise.reject(error)
 )

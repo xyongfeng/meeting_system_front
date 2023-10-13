@@ -1,5 +1,5 @@
 <script setup>
-import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
+import {UserOutlined, LockOutlined} from "@ant-design/icons-vue";
 import {
   ref,
   reactive,
@@ -10,11 +10,16 @@ import {
   onMounted,
 } from "vue";
 import axios from "../../../js/axios";
-import { useRouter } from "vue-router";
+import {useRouter} from "vue-router";
 import store from "../../../js/store";
-import { updateLocalUserInfo } from "../../../utils/myUtils";
+import {updateLocalUserInfo} from "../../../utils/myUtils";
+import RecordFooter from "../../global/RecordFooter.vue";
+
 const captchaRef = ref();
 const router = useRouter();
+// 如果是线上就禁用拍照登录和注册 primary
+const photoLoginType = ref("info");
+const registerType = ref("info");
 
 // const captchaUrl = ref("/api/captcha?date=" + new Date());
 
@@ -84,7 +89,7 @@ const login = async () => {
     if (valid) {
       const res = await axios.post("/users/login", user);
       // console.log(res);
-      if (res.code == 500) {
+      if (res.code === 500) {
         updateCaptcha();
         return;
       }
@@ -95,22 +100,36 @@ const login = async () => {
   });
 };
 const register = () => {
-  router.push("/register");
+  if (photoLoginType.value === "info") {
+    ElMessage.warning("为了防止系统被滥用，注册功能已被禁用，请联系管理员获取账号")
+  } else {
+    router.push("/register");
+  }
 };
+
 // 拍照可视化
 const takePhotoVisible = ref(false);
+
+const onPhotoLogin = () => {
+  if (photoLoginType.value === "info") {
+    ElMessage.warning("拍照登录已被禁用")
+  } else {
+    takePhotoVisible.value = true;
+  }
+}
+
 // 拍照组件对象，可以读取拍照图片的base64
 const takePhotoRef = ref(null);
 const takePhotoLogin = async () => {
   await axios
-    .post(`/users/loginWithFace`, { imgBase64: takePhotoRef.value.getImgBase64() })
-    .then((res) => {
-      takePhotoRef.value.stopLoading();
-      if (res.code == 500) return;
-      loginSuccess(res);
+      .post(`/users/loginWithFace`, {imgBase64: takePhotoRef.value.getImgBase64()})
+      .then((res) => {
+        takePhotoRef.value.stopLoading();
+        if (res.code == 500) return;
+        loginSuccess(res);
 
-      takePhotoRef.value.beforeClose();
-    });
+        takePhotoRef.value.beforeClose();
+      });
 };
 </script>
 
@@ -121,54 +140,57 @@ const takePhotoLogin = async () => {
       <h3 class="loginTitle">音视频会议系统</h3>
 
       <div class="photoLogin">
-        <el-link :underline="false" type="primary" @click="takePhotoVisible = true"
-          >拍照登录</el-link
+        <el-link :underline="false" :type="photoLoginType" @click="onPhotoLogin"
+        >拍照登录
+        </el-link
         >
       </div>
 
       <el-form-item prop="username">
         <el-input
-          :prefix-icon="UserOutlined"
-          v-model="user.username"
-          @keyup.enter="login"
-          placeholder="请输入用户名"
+            :prefix-icon="UserOutlined"
+            v-model="user.username"
+            @keyup.enter="login"
+            placeholder="请输入用户名"
         />
       </el-form-item>
       <el-form-item prop="password">
         <el-input
-          :prefix-icon="LockOutlined"
-          v-model="user.password"
-          @keyup.enter="login"
-          placeholder="请输入密码"
-          show-password
+            :prefix-icon="LockOutlined"
+            v-model="user.password"
+            @keyup.enter="login"
+            placeholder="请输入密码"
+            show-password
         />
       </el-form-item>
       <el-form-item prop="code">
         <el-input
-          v-model="user.code"
-          @keyup.enter="login"
-          placeholder="请输入验证码"
-          style="width: 230px; margin-right: 5px"
+            v-model="user.code"
+            @keyup.enter="login"
+            placeholder="请输入验证码"
+            style="width: 230px; margin-right: 5px"
         ></el-input>
         <!-- <img :src="captchaUrl" @click="updateCaptcha" /> -->
-        <captcha ref="captchaRef" :clearCode="clearCode" />
+        <captcha ref="captchaRef" :clearCode="clearCode"/>
       </el-form-item>
       <div>
         <el-button type="primary" @click="login" style="width: 100%">登录</el-button>
       </div>
       <div style="margin-top: 10px">
-        <el-button type="primary" @click="register" style="width: 100%">注册</el-button>
+        <el-button :type="registerType" @click="register" style="width: 100%">注册</el-button>
       </div>
+
     </el-form>
     <take-photo
-      ref="takePhotoRef"
-      v-if="takePhotoVisible"
-      title="拍照登录"
-      :sendAction="takePhotoLogin"
-      :closeView="() => (takePhotoVisible = false)"
+        ref="takePhotoRef"
+        v-if="takePhotoVisible"
+        title="拍照登录"
+        :sendAction="takePhotoLogin"
+        :closeView="() => (takePhotoVisible = false)"
     />
+    <record-footer/>
   </div>
-  <!-- <div v-else><h1>检测中</h1></div> -->
+
 </template>
 
 <style>
@@ -181,12 +203,16 @@ const takePhotoLogin = async () => {
   border: 1px solid #eaeaea;
   box-shadow: 0 0 25px #cac6c6;
 }
+
 .loginTitle {
   text-align: center;
   margin: 8px auto 30px auto;
 }
+
 .photoLogin {
   text-align: center;
   margin-bottom: 5px;
 }
+
+
 </style>

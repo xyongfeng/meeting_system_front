@@ -118,7 +118,7 @@ const sumbitChangeReq = async () => {
   await axios.post(`/users/meeting/${meetingId.value}/userState`, {
     list: changeState,
   });
-
+  hadChange.value = false;
   console.log(changeState);
 };
 

@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeMount, ref } from "vue";
 import { useRoute } from "vue-router";
+import RecordFooter from "../global/RecordFooter.vue";
 const route = useRoute();
 onBeforeMount(() => {});
 </script>
@@ -41,9 +42,12 @@ onBeforeMount(() => {});
           <div v-else>
             <router-view />
           </div>
+          <record-footer/>
         </el-main>
       </el-container>
+
     </el-scrollbar>
+
   </div>
 </template>
 

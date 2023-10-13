@@ -1,12 +1,12 @@
 <script setup>
-import { ref, reactive, onBeforeMount } from "vue";
+import {ref, reactive, onBeforeMount} from "vue";
 import {
   EditOutlined,
   DeleteOutlined,
   SettingOutlined,
   SearchOutlined,
 } from "@ant-design/icons-vue";
-import { Plus, Setting } from "@element-plus/icons-vue";
+import {Plus, Setting} from "@element-plus/icons-vue";
 import axios from "../../../js/axios";
 
 import {
@@ -57,6 +57,8 @@ const insertUsersFormRef = ref(null);
 
 const insertUsersRules = reactive(getUserFormRule());
 
+const updateUsersRules = reactive(getUserFormRule(true));
+
 // 修改头像对话框展示
 const updateHeadImgVisible = ref(false);
 
@@ -70,8 +72,8 @@ const updateUsersFormRef = ref(null);
 
 const getUsers = async () => {
   // 如果crrent参数不为空，则覆盖currentPage
-  let { data: res } = await axios.get(
-    `/admins/users/${currentPage.value}/${pageSize.value}`
+  let {data: res} = await axios.get(
+      `/admins/users/${currentPage.value}/${pageSize.value}`
   );
   userListTemp.value = [];
   userList.value = [];
@@ -94,8 +96,8 @@ const getUsers = async () => {
 };
 // 修改管理员权限
 const changeAdmin = async (user) => {
-  const { data: res } = await axios.put(
-    `/admins/users/${user.id}/admin/${user.isAdmin ? 1 : 0}`
+  const {data: res} = await axios.put(
+      `/admins/users/${user.id}/admin/${user.isAdmin ? 1 : 0}`
   );
 };
 
@@ -127,17 +129,17 @@ const insertUsersReq = async () => {
   insertUsersVisible.value = false;
   convetFormNull(insertEditForm, ["email", "telephone"]);
   const res = await axios
-    .post("/admins/users", {
-      username: insertEditForm.username,
-      password: insertEditForm.password,
-      name: insertEditForm.name,
-      email: insertEditForm.email,
-      telephone: insertEditForm.telephone,
-      isAdmin: insertEditForm.isAdmin,
-    })
-    .then(() => {
-      getUsers();
-    });
+      .post("/admins/users", {
+        username: insertEditForm.username,
+        password: insertEditForm.password,
+        name: insertEditForm.name,
+        email: insertEditForm.email,
+        telephone: insertEditForm.telephone,
+        isAdmin: insertEditForm.isAdmin,
+      })
+      .then(() => {
+        getUsers();
+      });
 };
 // 按下添加用户
 const insertUsersSumbit = async (formEl) => {
@@ -160,27 +162,29 @@ const updateUsersReq = async () => {
   updateUsersVisible.value = false;
   // convetFormNull(updateEditForm, ["email", "telephone"]);
   const res = await axios
-    .put(`/admins/users/${updateEditForm.id}`, {
-      username: updateEditForm.username,
-      name: updateEditForm.name,
-      email: updateEditForm.email,
-      telephone: updateEditForm.telephone,
-      isAdmin: updateEditForm.isAdmin,
-    })
-    .then((res) => {
-      if (res.code == 200) {
-        updateUsersAfter(res.data);
-      }
-    });
+      .put(`/admins/users/${updateEditForm.id}`, {
+        username: updateEditForm.username,
+        name: updateEditForm.name,
+        password: updateEditForm.password,
+        email: updateEditForm.email,
+        telephone: updateEditForm.telephone,
+        isAdmin: updateEditForm.isAdmin,
+      })
+      .then((res) => {
+        if (res.code == 200) {
+          updateUsersAfter(res.data);
+        }
+      });
 };
 
 const updateUsersAfter = (users) => {
   const run = (value, index, array) => {
-    if (value["id"] == users.id) {
+    if (value["id"] === users.id) {
       array[index]["username"] = users["username"];
       array[index]["name"] = users["name"];
       array[index]["telephone"] = users["telephone"];
       array[index]["email"] = users["email"];
+      array[index]["isAdmin"] = users["isAdmin"];
     }
   };
   userList.value.forEach(run);
@@ -207,6 +211,7 @@ const toEditUser = (users) => {
   updateUsersVisible.value = true;
   updateEditForm.id = users.id;
   updateEditForm.username = users.username;
+  updateEditForm.password = "";
   updateEditForm.name = users.name;
   updateEditForm.email = users.email;
   updateEditForm.telephone = users.telephone;
@@ -242,7 +247,7 @@ const toEditRole = async (users) => {
     users.roleVisible = true;
     // 初始化权限为假
     resetRoleIdMap(users);
-    await axios.get(`/admins/users/${users.id}/role`).then(({ data }) => {
+    await axios.get(`/admins/users/${users.id}/role`).then(({data}) => {
       // 获取用户拥有权限，并对每个权限进行选中
       data.forEach((role, index, arr) => (users.roleIdMap[role.id] = true));
     });
@@ -276,10 +281,10 @@ const searchValue = ref("");
 const userListTemp = ref([]);
 
 const searchOptions = [
-  { label: "用户名", value: "username" },
-  { label: "名称", value: "name" },
-  { label: "手机号", value: "telephone" },
-  { label: "邮箱", value: "email" },
+  {label: "用户名", value: "username"},
+  {label: "名称", value: "name"},
+  {label: "手机号", value: "telephone"},
+  {label: "邮箱", value: "email"},
 ];
 
 const searching = ref(false);
@@ -320,16 +325,16 @@ onBeforeMount(async () => {
       <el-select v-model="searchType" placeholder="选择字段" style="width: 120px">
         <!-- <el-option></el-option> -->
         <el-option
-          v-for="item in searchOptions"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
+            v-for="item in searchOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
         />
       </el-select>
       <el-input
-        placeholder="请输入搜索关键字"
-        v-model="searchValue"
-        @keyup.enter="search"
+          placeholder="请输入搜索关键字"
+          v-model="searchValue"
+          @keyup.enter="search"
       >
         <template #append>
           <el-button :icon="SearchOutlined" @click="search"></el-button>
@@ -339,28 +344,30 @@ onBeforeMount(async () => {
       <el-button type="primary" @click="insertUsersVisible = true">添加用户</el-button>
     </div>
     <el-table :data="userList" stripe style="width: 100%" max-height="400">
-      <el-table-column type="index" label="#" width="50" />
-      <el-table-column prop="username" label="用户名" />
-      <el-table-column prop="name" label="名称" />
-      <el-table-column prop="telephone" label="手机号" />
-      <el-table-column prop="email" label="邮箱" />
+      <el-table-column type="index" label="#" width="50"/>
+      <el-table-column prop="username" label="用户名"/>
+      <el-table-column prop="name" label="名称"/>
+      <el-table-column prop="telephone" label="手机号"/>
+      <el-table-column prop="email" label="邮箱"/>
       <el-table-column prop="headImage" label="头像">
         <template #default="scope">
           <img
-            v-if="scope.row.headImage != ''"
-            class="faceimg"
-            :src="scope.row.headImage"
-            alt="空"
-            @click="toUpdateHeadImg(scope.row)"
+              v-if="scope.row.headImage != ''"
+              class="faceimg"
+              :src="scope.row.headImage"
+              alt="空"
+              @click="toUpdateHeadImg(scope.row)"
           />
           <el-icon v-else class="faceimg" @click="toUpdateHeadImg(scope.row)"
-            ><Plus
-          /></el-icon>
+          >
+            <Plus
+            />
+          </el-icon>
         </template>
       </el-table-column>
       <el-table-column prop="isAdmin" label="管理员" v-if="loginUser.root">
         <template #default="scope">
-          <el-switch v-model="scope.row.isAdmin" @change="changeAdmin(scope.row)" />
+          <el-switch v-model="scope.row.isAdmin" @change="changeAdmin(scope.row)"/>
         </template>
       </el-table-column>
 
@@ -368,58 +375,65 @@ onBeforeMount(async () => {
         <template #default="scope">
           <el-button-group>
             <el-popover
-              trigger="click"
-              :visible="scope.row.roleVisible"
-              placement="top"
-              :width="160"
-              v-if="loginUser.root && scope.row.isAdmin"
+                trigger="click"
+                :visible="scope.row.roleVisible"
+                placement="top"
+                :width="160"
+                v-if="loginUser.root && scope.row.isAdmin"
             >
               <el-scrollbar max-height="120px">
                 <div
-                  style="text-align: center"
-                  v-for="(role, index) in roleList"
-                  :key="index"
+                    style="text-align: center"
+                    v-for="(role, index) in roleList"
+                    :key="index"
                 >
                   <el-checkbox
-                    v-model="scope.row.roleIdMap[role.id]"
-                    :label="role.name"
-                    size="large"
+                      v-model="scope.row.roleIdMap[role.id]"
+                      :label="role.name"
+                      size="large"
                   />
                 </div>
               </el-scrollbar>
 
               <div style="text-align: center">
                 <el-button size="small" text @click="cancleEditRole(scope.row)"
-                  >取消</el-button
+                >取消
+                </el-button
                 >
                 <el-button size="small" type="primary" @click="editRoleReq(scope.row)"
-                  >确认</el-button
+                >确认
+                </el-button
                 >
               </div>
               <template #reference
-                ><el-button
-                  type="warning"
-                  size="small"
-                  :icon="Setting"
-                  @click="toEditRole(scope.row)"
-                  >权限</el-button
-                ></template
+              >
+                <el-button
+                    type="warning"
+                    size="small"
+                    :icon="Setting"
+                    @click="toEditRole(scope.row)"
+                >权限
+                </el-button
+                >
+              </template
               >
             </el-popover>
 
             <el-button
-              type="primary"
-              size="small"
-              :icon="EditOutlined"
-              @click="toEditUser(scope.row)"
-              >编辑</el-button
+                type="primary"
+                size="small"
+                :icon="EditOutlined"
+                @click="toEditUser(scope.row)"
+            >编辑
+            </el-button
             >
             <el-button
-              type="danger"
-              size="small"
-              :icon="DeleteOutlined"
-              @click="delUsersReq(scope.row)"
-              >删除</el-button
+                type="danger"
+                size="small"
+                :icon="DeleteOutlined"
+                @click="delUsersReq(scope.row)"
+            >删除
+            </el-button
             >
           </el-button-group>
         </template>
@@ -427,36 +441,36 @@ onBeforeMount(async () => {
     </el-table>
     <!-- 添加用户对话框 -->
     <el-dialog
-      v-model="insertUsersVisible"
-      width="30%"
-      title="添加用户"
-      :before-close="() => insertUsersExitBefore(insertUsersFormRef)"
+        v-model="insertUsersVisible"
+        width="30%"
+        title="添加用户"
+        :before-close="() => insertUsersExitBefore(insertUsersFormRef)"
     >
       <span>
         <el-form
-          ref="insertUsersFormRef"
-          label-width="120px"
-          :model="insertEditForm"
-          :rules="insertUsersRules"
-          status-icon
+            ref="insertUsersFormRef"
+            label-width="120px"
+            :model="insertEditForm"
+            :rules="insertUsersRules"
+            status-icon
         >
           <el-form-item label="用户名" prop="username">
-            <el-input v-model="insertEditForm.username" />
+            <el-input v-model="insertEditForm.username" class="username"/>
           </el-form-item>
           <el-form-item label="密码" prop="password">
-            <el-input v-model="insertEditForm.password" show-password />
+            <el-input v-model="insertEditForm.password" show-password class="password"/>
           </el-form-item>
           <el-form-item label="名称" prop="name">
-            <el-input v-model="insertEditForm.name" />
+            <el-input v-model="insertEditForm.name" class="name"/>
           </el-form-item>
           <el-form-item label="邮箱" prop="email">
-            <el-input v-model="insertEditForm.email" />
+            <el-input v-model="insertEditForm.email"/>
           </el-form-item>
           <el-form-item label="手机号" prop="telephone">
-            <el-input v-model="insertEditForm.telephone" />
+            <el-input v-model="insertEditForm.telephone"/>
           </el-form-item>
           <el-form-item label="是否为管理员" prop="isAdmin" v-if="loginUser.root">
-            <el-switch v-model="insertEditForm.isAdmin" />
+            <el-switch v-model="insertEditForm.isAdmin"/>
           </el-form-item>
         </el-form>
       </span>
@@ -464,40 +478,43 @@ onBeforeMount(async () => {
         <span class="dialog-footer">
           <el-button @click="insertUsersExitBefore(insertUsersFormRef)">取消</el-button>
           <el-button type="primary" @click="insertUsersSumbit(insertUsersFormRef)"
-            >添加</el-button
+          >添加</el-button
           >
         </span>
       </template>
     </el-dialog>
     <!-- 修改用户对话框 -->
     <el-dialog
-      v-model="updateUsersVisible"
-      width="30%"
-      title="修改用户"
-      :before-close="() => updateUsersExitBefore(updateUsersFormRef)"
+        v-model="updateUsersVisible"
+        width="30%"
+        title="修改用户"
+        :before-close="() => updateUsersExitBefore(updateUsersFormRef)"
     >
       <span>
         <el-form
-          ref="updateUsersFormRef"
-          label-width="120px"
-          :model="updateEditForm"
-          :rules="insertUsersRules"
-          status-icon
+            ref="updateUsersFormRef"
+            label-width="120px"
+            :model="updateEditForm"
+            :rules="updateUsersRules"
+            status-icon
         >
           <el-form-item label="用户名" prop="username">
-            <el-input v-model="updateEditForm.username" />
+            <el-input v-model="updateEditForm.username"/>
           </el-form-item>
           <el-form-item label="名称" prop="name">
-            <el-input v-model="updateEditForm.name" />
+            <el-input v-model="updateEditForm.name"/>
+          </el-form-item>
+           <el-form-item label="密码" prop="password">
+            <el-input v-model="updateEditForm.password" show-password/>
           </el-form-item>
           <el-form-item label="邮箱" prop="email">
-            <el-input v-model="updateEditForm.email" />
+            <el-input v-model="updateEditForm.email"/>
           </el-form-item>
           <el-form-item label="手机号" prop="telephone">
-            <el-input v-model="updateEditForm.telephone" />
+            <el-input v-model="updateEditForm.telephone"/>
           </el-form-item>
           <el-form-item label="是否为管理员" prop="isAdmin" v-if="loginUser.root">
-            <el-switch v-model="updateEditForm.isAdmin" />
+            <el-switch v-model="updateEditForm.isAdmin"/>
           </el-form-item>
         </el-form>
       </span>
@@ -505,17 +522,17 @@ onBeforeMount(async () => {
         <span class="dialog-footer">
           <el-button @click="updateUsersExitBefore(updateUsersFormRef)">取消</el-button>
           <el-button type="primary" @click="updateUsersSumbit(updateUsersFormRef)"
-            >修改</el-button
+          >修改</el-button
           >
         </span>
       </template>
     </el-dialog>
     <update-head-image
-      ref="updateHeadImageRef"
-      v-model="updateHeadImgVisible"
-      :closeView="() => (updateHeadImgVisible = false)"
-      :afterUpdate="headImgAfterUpdate"
-      :isAdmin="true"
+        ref="updateHeadImageRef"
+        v-model="updateHeadImgVisible"
+        :closeView="() => (updateHeadImgVisible = false)"
+        :afterUpdate="headImgAfterUpdate"
+        :isAdmin="true"
     />
   </div>
 </template>
@@ -525,6 +542,7 @@ onBeforeMount(async () => {
   margin-top: 20px;
   margin-bottom: 20px;
 }
+
 .table-header .el-input {
   width: 300px;
   margin-right: 20px;
@@ -536,6 +554,7 @@ onBeforeMount(async () => {
   border-radius: 24px;
   cursor: pointer;
 }
+
 .el-dialog span {
   text-align: center;
 }

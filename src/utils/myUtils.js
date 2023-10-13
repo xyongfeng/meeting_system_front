@@ -32,14 +32,14 @@ export const getTime = () => {
   return `${timeTo2(date.getHours())}:${timeTo2(date.getMinutes())}`;
 };
 
-export const getUserFormRule = ()=>{
+export const getUserFormRule = (isUpdate=false)=>{
   return {
     username: [
       { required: true, message: "用户名不能为空" },
       { max: 20, message: "用户名长度不能大于20" },
     ],
     password: [
-      { required: true, message: "密码不能为空" },
+      { required: !isUpdate, message: "密码不能为空" },
       { max: 20, message: "密码长度不能大于20" },
     ],
     oldpass: [
