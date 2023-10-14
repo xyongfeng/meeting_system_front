@@ -19,6 +19,7 @@ export default defineConfig({
     // 设置代理，解决跨域问题
     server: {
         port: '80',
+        host: '127.0.0.1',
         proxy: {
             '/api': {
                 ws: false,

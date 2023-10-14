@@ -174,7 +174,7 @@ const getChatJieba = async () => {
     Object.keys(res.data).forEach((item) => {
       chatJieba.value.push({ name: item, value: res.data[item] });
     });
-    console.log(chatJieba.value);
+    // console.log(chatJieba.value);
     initWordCloudRef();
   });
 };

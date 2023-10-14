@@ -1,13 +1,13 @@
 <script setup>
 import axios from "axios";
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
-import { ElLoading } from "element-plus";
+import {ref, onMounted, onBeforeUnmount, computed} from "vue";
+import {ElLoading} from "element-plus";
 // 父传子
 const props = defineProps({
-  title: { type: String, default: "" },
-  sendAction: { type: Function, default: Function },
-  closeView: { type: Function, default: Function, equired: true },
-  uncloseable: { type: Boolean, default: false },
+  title: {type: String, default: ""},
+  sendAction: {type: Function, default: Function},
+  closeView: {type: Function, default: Function, equired: true},
+  uncloseable: {type: Boolean, default: false},
 });
 const title = ref(props.title);
 const viewVisible = ref(true);
@@ -25,19 +25,19 @@ const takeMsg = computed(() => {
 const openCamera = () => {
   if (navigator.mediaDevices) {
     navigator.mediaDevices
-      // 开启视频，关闭音频
-      .getUserMedia({ audio: false, video: true })
-      .then((stream) => {
-        // 将视频流传入viedo控件
-        // console.log("openCamera", videoDom.value);
-        videoDom.value.srcObject = stream;
-        videoDom.value.play();
-        // console.log(videoDom.value.srcObject);
-      })
-      .catch((err) => {
-        console.log(err);
-        ElMessage.warning("摄像头打开失败");
-      });
+        // 开启视频，关闭音频
+        .getUserMedia({audio: false, video: true})
+        .then((stream) => {
+          // 将视频流传入viedo控件
+          // console.log("openCamera", videoDom.value);
+          videoDom.value.srcObject = stream;
+          videoDom.value.play();
+          // console.log(videoDom.value.srcObject);
+        })
+        .catch((err) => {
+          console.log(err);
+          ElMessage.warning("摄像头打开失败");
+        });
   } else {
     ElMessage.warning("该浏览器不支持开启摄像头，请更换最新版浏览器");
   }
@@ -108,35 +108,36 @@ onBeforeUnmount(() => {
   beforeClose();
 });
 // 子传父
-defineExpose({ getImgBase64, beforeClose, stopLoading });
+defineExpose({getImgBase64, beforeClose, stopLoading});
 </script>
 
 <template>
   <div class="signInDialog">
     <el-dialog
-      v-model="viewVisible"
-      width="45%"
-      top="5vh"
-      :title="title"
-      :center="true"
-      :before-close="beforeClose"
-      :show-close="!uncloseable"
-      :close-on-click-modal="!uncloseable"
-      :close-on-press-escape="!uncloseable"
+        v-model="viewVisible"
+        width="45%"
+        top="5vh"
+        :title="title"
+        :center="true"
+        :before-close="beforeClose"
+        :show-close="!uncloseable"
+        :close-on-click-modal="!uncloseable"
+        :close-on-press-escape="!uncloseable"
     >
       <div class="sigin_block">
         <!-- 画板 -->
-        <canvas style="display: none" ref="canvasDom" />
+        <canvas style="display: none" ref="canvasDom"/>
         <!-- 播放器，用来播放拍摄的视频 -->
-        <video v-show="!imgurl" class="camera_video" ref="videoDom" />
-        <img v-show="imgurl" :src="imgurl" class="camera_video" />
-        <br />
+        <video v-show="!imgurl" class="camera_video" ref="videoDom"/>
+        <img v-show="imgurl" :src="imgurl" class="camera_video"/>
+        <br/>
       </div>
       <template #footer>
         <div class="dialog-footer">
           <el-button type="primary" @click="takePhoto">{{ takeMsg }}</el-button>
           <el-button type="success" :disabled="!imgurl" @click="sendPhoto"
-            >确定</el-button
+          >确定
+          </el-button
           >
         </div>
       </template>
@@ -146,14 +147,17 @@ defineExpose({ getImgBase64, beforeClose, stopLoading });
 
 <style scoped>
 .sigin_block {
-  width: 640px;
-  height: 480px;
+  width: 80vh;
+  height: 60vh;
   /* margin: 0 auto; */
+  text-align: center;
 }
+
 .camera_video {
   width: 100%;
   height: 100%;
   /* border: 2px black solid; */
-  margin-left: 40px;
+  margin-left: 5vh;
+
 }
 </style>
