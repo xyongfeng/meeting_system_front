@@ -14,7 +14,9 @@ import {trim} from "lodash";
 import {getTime, isExistMeeting, sleep} from "../../../utils/myUtils";
 import html2canvas from "html2canvas";
 import {webRTCConfig} from "../../../config";
-import { Microphone, Mute } from '@element-plus/icons-vue'
+import {Microphone, Mute} from '@element-plus/icons-vue'
+import UMeetingRecord from "./UMeetingRecord.vue";
+// import RecordRTC from 'recordrtc';
 
 const audioMsg = ref("开启语音");
 const rtcMsg = ref("开启投屏");
@@ -658,70 +660,6 @@ const outRoom = () => {
     router.replace({path: "/home/myMeetingList"});
   }
 };
-// 录制视频流
-var recordMediaStream = null;
-// 录制对象
-var mediaRecorder = null;
-// 视频保存
-let chunks = [];
-
-const recording = ref(false);
-
-// 开启录制
-const startRecord = async () => {
-  chunks = [];
-  // console.log(chunks);
-  await navigator.mediaDevices
-      .getDisplayMedia({
-        video: true,
-        audio: true,
-      })
-      .then((res) => {
-        recordMediaStream = res;
-        mediaRecorder = new MediaRecorder(recordMediaStream, {
-          audioBitsPerSecond: 128000, //音频码率
-          videoBitsPerSecond: 2500000, //视频码率
-          mimeType: "video/webm\;codecs=h264", //录制格式，视不同浏览器而定
-        });
-
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            // console.log(e);
-            //这里直接将数据写入了内存，如果录制长视频应该写入到别的地方
-            chunks.push(e.data);
-          }
-        };
-        //开始录制 0.1秒保存一次
-        mediaRecorder.start(100);
-      });
-};
-// 停止录制
-const stopRecord = () => {
-  recordMediaStream.getTracks().forEach((track) => track.stop());
-  mediaRecorder && mediaRecorder.state !== "inactive" && mediaRecorder.stop();
-
-  let blob = new Blob(chunks, {
-    type: "video/webm",
-  });
-
-  let url = URL.createObjectURL(blob);
-  let a = document.createElement("a");
-  document.body.appendChild(a);
-  a.style = "display: none";
-  a.href = url;
-  a.download = meetingInfo.value.name + "会议录制视频.webm"; //下载的文件名
-  a.click();
-  window.URL.revokeObjectURL(url);
-};
-// 录制
-const sumbitRecord = () => {
-  if (recording.value) {
-    stopRecord();
-  } else {
-    startRecord();
-  }
-  recording.value = !recording.value;
-};
 
 // 用户信息框
 const userInfoVisible = ref(false);
@@ -993,10 +931,7 @@ onBeforeUnmount(() => {
             <el-button @click="outRoom">退出房间</el-button>
             <div class="admin_button" v-if="isMaster">
               <el-button @click="setSignInListVisible(true)">成员列表</el-button>
-              <el-button @click="sumbitRecord">{{
-                  recording ? "关闭录制" : "开启录制"
-                }}
-              </el-button>
+              <u-meeting-record :meetingName="meetingInfo.name"/>
             </div>
           </div>
         </el-main>

@@ -18,8 +18,8 @@ import RecordFooter from "../../global/RecordFooter.vue";
 const captchaRef = ref();
 const router = useRouter();
 // 如果是线上就禁用拍照登录和注册 primary or info
-const photoLoginType = ref("primary");
-const registerType = ref("primary");
+const photoLoginType = ref("info");
+const registerType = ref("info");
 
 // const captchaUrl = ref("/api/captcha?date=" + new Date());
 

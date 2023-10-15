@@ -19,6 +19,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "mockjs": "^1.1.0",
+    "recordrtc": "^5.6.2",
     "socket.io-client": "^2.2.0",
     "vue": "^3.2.25",
     "vue-json-excel": "^0.3.0",
