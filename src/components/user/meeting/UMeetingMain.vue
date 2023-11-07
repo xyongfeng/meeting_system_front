@@ -113,6 +113,14 @@ socket.on("left_user", (userId) => {
   if (userMap.value[userId].uping) {
     rtcEndAction();
   }
+
+
+  // 关闭rtc连接
+  if (vRtcConns[userId]) {
+    vRtcConns[userId].close()
+    vRtcConns[userId] = undefined;
+  }
+
   // 清空状态
   userMap.value[userId] = undefined;
   countUserMany();
